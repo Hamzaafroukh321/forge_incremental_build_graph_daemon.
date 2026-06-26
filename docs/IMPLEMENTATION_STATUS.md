@@ -94,4 +94,4 @@ Benchmark scripts and budgets are documented. Numeric criteria are unverified in
 
 ## Last Verified Commit
 
-Latest compiler-verified committed baseline is `3e58530` (`feat(state): persist FST log and checkpoints`). Earlier implementation commits include `5022691`, `0774bb3`, `ca4c2e8`, `54aa070`, and `af0feb2`.
+Latest compiler-verified committed baseline is `5de0292` (`feat(ipc): add Unix socket status transport`). Earlier implementation commits include `3e58530`, `5022691`, `0774bb3`, `ca4c2e8`, `54aa070`, and `af0feb2`.

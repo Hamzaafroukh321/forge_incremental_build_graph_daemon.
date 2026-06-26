@@ -19,4 +19,32 @@ class Daemon {
   WorkspaceCore workspace_;
 };
 
+class UnixSocketDaemon {
+ public:
+  UnixSocketDaemon(std::filesystem::path socket_path, Daemon& daemon);
+  ~UnixSocketDaemon();
+
+  UnixSocketDaemon(const UnixSocketDaemon&) = delete;
+  UnixSocketDaemon& operator=(const UnixSocketDaemon&) = delete;
+
+  [[nodiscard]] Result<void> start();
+  [[nodiscard]] Result<void> serve_once();
+  [[nodiscard]] Result<void> stop();
+
+ private:
+  std::filesystem::path socket_path_;
+  Daemon& daemon_;
+  int listen_fd_{-1};
+};
+
+class UnixSocketClient {
+ public:
+  explicit UnixSocketClient(std::filesystem::path socket_path);
+
+  [[nodiscard]] Result<std::string> status();
+
+ private:
+  std::filesystem::path socket_path_;
+};
+
 }  // namespace forge

@@ -11,6 +11,7 @@ The primary test executable is `forge_tests`. It contains named tests for:
 - FST committed-prefix recovery.
 - Event-hub backpressure and terminal retention.
 - Manifest-backed CLI graph/build workflow.
+- Linux Unix-domain FIPC status round trip.
 
 Run:
 

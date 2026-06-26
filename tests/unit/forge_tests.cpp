@@ -10,6 +10,7 @@
 #include <iterator>
 #include <sstream>
 #include <stdexcept>
+#include <thread>
 
 namespace {
 
@@ -407,6 +408,32 @@ void ShutdownWithQueuedResults() {
   require(daemon.state() == DaemonState::stopped, "stopped");
 }
 
+void UnixSocketDaemonStatusRoundTrip() {
+#ifdef _WIN32
+  require(true, "unix sockets skipped on Windows");
+#else
+  const auto socket_path = std::filesystem::temp_directory_path() / "forge-status-test.sock";
+  std::filesystem::remove(socket_path);
+  Daemon daemon(".");
+  UnixSocketDaemon server(socket_path, daemon);
+  require(server.start().ok(), "socket daemon started");
+  Status served_status = Status::success();
+  std::thread server_thread([&]() {
+    auto served = server.serve_once();
+    served_status = served.status();
+  });
+  UnixSocketClient client(socket_path);
+  auto status = client.status();
+  server_thread.join();
+  require(served_status.ok(), "socket daemon served request");
+  require(status.ok(), "socket client received status");
+  require(status.value().find("state=running") != std::string::npos, "socket status state");
+  require(status.value().find("generation=") != std::string::npos, "socket status generation");
+  require(server.stop().ok(), "socket daemon stopped");
+  std::filesystem::remove(socket_path);
+#endif
+}
+
 void FuzzerRegressionBundles() {
   FipcCodec codec;
   auto bytes = codec.encode(frame(FrameType::hello, 0, 0, 0, Bytes{static_cast<Byte>('f'), static_cast<Byte>('z')}));
@@ -497,6 +524,7 @@ int main() {
       {"CancelEveryBuildPhase", CancelEveryBuildPhase},
       {"EventHashWorkerStateTSan", EventHashWorkerStateTSan},
       {"ShutdownWithQueuedResults", ShutdownWithQueuedResults},
+      {"UnixSocketDaemonStatusRoundTrip", UnixSocketDaemonStatusRoundTrip},
       {"FuzzerRegressionBundles", FuzzerRegressionBundles},
       {"MalformedFrameRejected", MalformedFrameRejected},
       {"StaleFingerprintIgnored", StaleFingerprintIgnored},

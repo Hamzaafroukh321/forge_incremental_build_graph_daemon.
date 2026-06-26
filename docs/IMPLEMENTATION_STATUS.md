@@ -14,10 +14,11 @@ Phase 0 through Phase 7 are represented in the repository with C++20 source, CMa
 - `FORGE-017` advanced with manifest-backed `forge graph apply` and `forge build` workflows, plus Docker-backed build/test/sanitizer/fuzz smoke evidence.
 - `FORGE-026` advanced with filesystem-backed CAS publication and reopen verification.
 - `FORGE-013` and `FORGE-028` advanced with filesystem-backed FST append, checkpoint rotation, restart replay, and crash-tail compaction.
+- `FORGE-011` advanced with a Linux Unix-domain FIPC status socket, `forged --socket`, and `forge status --socket` smoke coverage.
 
 ## Next Actionable Ticket
 
-Implement the remaining Linux runtime adapters and persistent daemon services, then run long-running validation and performance budget checks.
+Implement the remaining inotify watcher adapter and long-running daemon services, then run soak validation and performance budget checks.
 
 ## Completed Modules
 
@@ -25,13 +26,13 @@ Implement the remaining Linux runtime adapters and persistent daemon services, t
 - CMake target definitions and presets.
 - Public headers for errors, IDs, codecs, graph, executor, artifacts, state, workspace, client, and daemon.
 - Source modules for FIPC/FST, graph, scheduler, workspace coalescing, mock execution, CAS, event crediting, and CLI entry points.
-- Named unit/integration tests and fuzz smoke harness sources. The unit harness currently registers 40 named tests.
+- Named unit/integration tests and fuzz smoke harness sources. The unit harness currently registers 41 named tests.
 - Documentation deliverables required by Section 24.
 
 ## In Progress Modules
 
-- Real Linux socket/inotify daemon adapters.
-- Linux socket/inotify-specific runtime adapters.
+- Inotify daemon adapter and watcher lifecycle validation.
+- Long-running multi-client socket daemon lifecycle validation.
 - Long-running soak and performance budget evidence.
 
 ## Known Blockers
@@ -39,7 +40,7 @@ Implement the remaining Linux runtime adapters and persistent daemon services, t
 | Blocker | Affected requirements | Attempted resolution | Resume command |
 | --- | --- | --- | --- |
 | No CMake or C++ compiler available on local PATH | Native host builds | Built `Dockerfile.dev` image with GCC/Clang/CMake/Ninja and verified through Docker | Use Docker commands in `AGENTS.md`, or install host CMake/GCC/Clang/MSVC |
-| Current host is Windows while spec targets Linux Unix-domain sockets and inotify-compatible adapters | Linux daemon runtime adapter validation | Kept core portable and CLI local-state based; verified Linux container builds/tests | Implement and run socket/inotify adapter validation on Linux x86-64/AArch64 |
+| Current host is Windows while spec targets Linux Unix-domain sockets and inotify-compatible adapters | Linux daemon runtime adapter validation | Kept core portable and verified a Docker Linux Unix-domain socket status round trip | Implement and run inotify adapter and long-running socket validation on Linux x86-64/AArch64 |
 
 ## Exact Build And Test Status
 
@@ -52,7 +53,8 @@ Implement the remaining Linux runtime adapters and persistent daemon services, t
 - Docker `cmake --build --preset debug`: passed with warnings as errors.
 - Docker `ctest --preset debug --output-on-failure`: passed, 1/1 CTest tests.
 - Docker `cmake --preset release`: passed.
-- Docker `cmake --build --preset release`: passed, including latest filesystem-backed CAS changes.
+- Docker `cmake --build --preset release`: passed, including latest filesystem-backed CAS/state and socket adapter changes.
+- Docker `forged --socket /tmp/forge-status.sock --once` plus `forge status --socket /tmp/forge-status.sock`: passed in debug and ASan builds.
 - Docker `cmake --install build/release --prefix build/install-smoke`: passed.
 
 Compiler-backed debug, release, tests, and install smoke have passed in the Docker Linux toolchain environment.
@@ -87,7 +89,7 @@ Benchmark scripts and budgets are documented. Numeric criteria are unverified in
 
 | Decision | Record | Reason |
 | --- | --- | --- |
-| Core implementation is portable C++ and Linux-specific socket/inotify adapters are isolated as future platform bindings | `docs/DECISIONS.md` ADR-0002 | Current environment cannot validate Linux system APIs. |
+| Core implementation is portable C++ and Linux-specific runtime adapters are isolated behind adapter classes | `docs/DECISIONS.md` ADR-0002 | Docker validates the first Unix-domain socket adapter; inotify and long-running daemon behavior still need target-platform campaigns. |
 | Digest primitive uses an internal deterministic 256-bit keyed FNV-style combiner, not a cryptographic dependency | `docs/DECISIONS.md` ADR-0003 | Keep production dependency set zero until license/toolchain review. |
 
 ## Last Verified Commit

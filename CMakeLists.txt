@@ -24,6 +24,7 @@ add_library(forge_core
   src/workspace/path_policy.cpp
   src/workspace/file_coalescer.cpp
   src/workspace/fingerprint.cpp
+  src/workspace/manifest.cpp
   src/graph/build_graph.cpp
   src/graph/invalidation.cpp
   src/graph/cycle_analyzer.cpp

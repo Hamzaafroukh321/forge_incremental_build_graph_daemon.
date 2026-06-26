@@ -59,7 +59,7 @@ cmake --build --preset fuzz
 ./build/fuzz/forge_build_pipeline_fuzz -runs=1000
 ```
 
-The current Windows workspace does not expose CMake or a C++ compiler on `PATH`; compiler-backed validation is therefore recorded as blocked in `docs/IMPLEMENTATION_STATUS.md`.
+The current Windows host does not expose CMake or a C++ compiler on `PATH`, but Docker Desktop can run the `Dockerfile.dev` Linux toolchain. Docker debug, release, ASan/UBSan, fuzz, TSan, CLI, and install smoke commands are recorded in `docs/IMPLEMENTATION_STATUS.md`.
 
 ## Risks And Mitigation
 
@@ -92,6 +92,6 @@ The current Windows workspace does not expose CMake or a C++ compiler on `PATH`;
 | CAS publication | In progress | In progress |
 | Append log/checkpoint/restart | In progress | In progress |
 | 30 named tests | In progress | In progress |
-| Three fuzz targets | In progress | In progress |
-| TSan/concurrency campaigns | Blocked: toolchain unavailable | Blocked: toolchain unavailable |
+| Three fuzz targets | Build and smoke verified | Build and smoke verified |
+| TSan/concurrency campaigns | TSan unit harness verified in Docker with seccomp unconfined | Broader threaded stress still needed |
 | Performance budgets | Unverified | Unverified |

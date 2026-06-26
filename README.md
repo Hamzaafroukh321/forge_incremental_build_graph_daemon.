@@ -12,10 +12,21 @@ cmake --build --preset debug
 ctest --preset debug --output-on-failure
 ```
 
+If the host has Docker but no local C++ toolchain:
+
+```sh
+docker build -f Dockerfile.dev -t forge-dev .
+docker run --rm -v "$PWD:/work" forge-dev cmake --preset debug
+docker run --rm -v "$PWD:/work" forge-dev cmake --build --preset debug
+docker run --rm -v "$PWD:/work" forge-dev ctest --preset debug --output-on-failure
+```
+
 ## Safe Example
 
 ```sh
 ./build/debug/forge demo
+./build/debug/forge graph apply examples/simple.fgm
+./build/debug/forge build examples/simple.fgm
 ```
 
 The demo creates an in-memory graph and runs the deterministic mock executor. It does not execute shell commands from graph input.

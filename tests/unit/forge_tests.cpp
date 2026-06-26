@@ -1,10 +1,12 @@
 #include "forge/client.hpp"
 #include "forge/daemon.hpp"
 #include "forge/fipc.hpp"
+#include "forge/manifest.hpp"
 
 #include <exception>
 #include <iostream>
 #include <iterator>
+#include <sstream>
 #include <stdexcept>
 
 namespace {
@@ -149,9 +151,28 @@ void GraphSnapshotSurvivesPublish() {
   BuildGraph graph;
   auto a = graph.put_node("a", ActionSpec{"a", {}}).value();
   auto snap = graph.snapshot();
-  graph.put_node("b", ActionSpec{"b", {}});
+  require(graph.put_node("b", ActionSpec{"b", {}}).ok(), "publish next generation");
   require(snap.nodes().contains(a), "snapshot retained old node");
   require(snap.nodes().size() == 1, "snapshot immutable");
+}
+
+void ManifestApplyBuildsTargets() {
+  std::istringstream input(
+      "node core mock-core mode=debug\n"
+      "node app mock-app mode=debug\n"
+      "edge app core declared\n"
+      "target app\n");
+  auto manifest = parse_manifest(input);
+  require(manifest.ok(), "manifest parsed");
+  WorkspaceCore workspace(".");
+  auto applied = apply_manifest(workspace, manifest.value());
+  require(applied.ok(), "manifest applied");
+  require(applied.value().nodes_by_name.size() == 2, "manifest nodes");
+  require(workspace.graph().edges().size() == 1, "manifest edges");
+  DeterministicMockExecutor executor;
+  auto built = workspace.build(applied.value().targets, executor);
+  require(built.ok(), "manifest build");
+  require(built.value().artifacts.size() == 2, "manifest target closure artifacts");
 }
 
 void DiamondRunsEachNodeOnce() {
@@ -351,7 +372,7 @@ void StaleFingerprintIgnored() {
   FileEventCoalescer coalescer;
   NormalizedPath p{"a"};
   auto first = coalescer.push(p, FileEventKind::modify, 0).value();
-  coalescer.push(p, FileEventKind::modify, 1);
+  require(coalescer.push(p, FileEventKind::modify, 1).ok(), "newer event");
   auto stale = coalescer.complete(first, InputFingerprint{p, digest_bytes("x", Bytes{}), 0, {}});
   require(!stale.ok(), "stale completion rejected");
 }
@@ -382,6 +403,7 @@ int main() {
       {"UnchangedContentNoInvalidation", UnchangedContentNoInvalidation},
       {"DynamicCycleWitnessStable", DynamicCycleWitnessStable},
       {"GraphSnapshotSurvivesPublish", GraphSnapshotSurvivesPublish},
+      {"ManifestApplyBuildsTargets", ManifestApplyBuildsTargets},
       {"DiamondRunsEachNodeOnce", DiamondRunsEachNodeOnce},
       {"SharedActionOneJob", SharedActionOneJob},
       {"CancelOneSharedRequest", CancelOneSharedRequest},

@@ -10,7 +10,7 @@ int cmd_status(int argc, char** argv);
 
 int main(int argc, char** argv) {
   if (argc < 2) {
-    std::cerr << "usage: forge <build|graph|status|demo>\n";
+    std::cerr << "usage: forge <build [manifest] [targets...]|graph apply <manifest>|status|demo>\n";
     return 2;
   }
   const std::string command = argv[1];

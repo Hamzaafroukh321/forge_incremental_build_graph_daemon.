@@ -20,7 +20,7 @@ Decision: Implement the production core, FIPC codec, session state, workspace mo
 
 Alternatives: Write Linux-only code that cannot be compiled or exercised here; or use a third-party portability layer before license review.
 
-Consequences: Core behavior is testable without kernel watchers. Full Linux daemon runtime validation remains blocked until a Linux toolchain host is available.
+Consequences: Core behavior is testable without kernel watchers. Docker now provides Linux compiler validation, but full socket/inotify daemon runtime validation remains pending until those adapters are implemented and exercised.
 
 Validation: Portable tests drive the same core entry points that Linux adapters will feed.
 

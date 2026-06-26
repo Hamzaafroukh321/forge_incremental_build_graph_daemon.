@@ -4,13 +4,14 @@ Generated from the local environment on 2026-06-26.
 
 ## Current Phase
 
-Phase 0 through Phase 7 are represented in the repository with C++20 source, CMake targets, tests, fuzz harnesses, and documentation. Compiler-backed verification is blocked in this environment because `cmake`, `g++`, `clang++`, `cl`, and `ninja` are not available on `PATH`.
+Phase 0 through Phase 7 are represented in the repository with C++20 source, CMake targets, tests, fuzz harnesses, and documentation. Host compiler tools are not available on `PATH`, but Docker Desktop can run the `Dockerfile.dev` Linux toolchain image and now provides compiler-backed verification.
 
 ## Last Completed Ticket
 
 - `FORGE-001` repository/build/test/fuzz structure drafted.
 - `FORGE-002` through `FORGE-037` have initial production-linked implementations and tests, but are not marked verified until compiled and executed.
 - `FORGE-009`, `FORGE-010`, `FORGE-012`, and `FORGE-013` were hardened in `ca4c2e8` with corrected FIPC frame layout, stream-generation retirement, FST declared-count/digest replay checks, and stricter test setup assertions.
+- `FORGE-017` advanced with manifest-backed `forge graph apply` and `forge build` workflows, plus Docker-backed build/test/sanitizer/fuzz smoke evidence.
 
 ## Next Actionable Ticket
 
@@ -27,7 +28,7 @@ Install or provide a CMake + C++20 toolchain, then run the debug build and fix a
 
 ## In Progress Modules
 
-- Compiler verification.
+- Real Linux socket/inotify daemon adapters.
 - Linux socket/inotify-specific runtime adapters.
 - Long-running soak and performance budget evidence.
 
@@ -35,22 +36,32 @@ Install or provide a CMake + C++20 toolchain, then run the debug build and fix a
 
 | Blocker | Affected requirements | Attempted resolution | Resume command |
 | --- | --- | --- | --- |
-| No CMake or C++ compiler available on local PATH | Build, tests, sanitizers, fuzz smoke, benchmarks | Checked `cmake`, `g++`, `clang++`, `cl`, `ninja`, and bundled Codex runtime bin paths | Install CMake and GCC/Clang/MSVC, then run `cmake --preset debug` |
-| Current host is Windows while spec targets Linux Unix-domain sockets and inotify-compatible adapters | Linux daemon runtime adapter validation | Kept core portable and CLI local-state based | Run Linux adapter validation on Linux x86-64/AArch64 |
+| No CMake or C++ compiler available on local PATH | Native host builds | Built `Dockerfile.dev` image with GCC/Clang/CMake/Ninja and verified through Docker | Use Docker commands in `AGENTS.md`, or install host CMake/GCC/Clang/MSVC |
+| Current host is Windows while spec targets Linux Unix-domain sockets and inotify-compatible adapters | Linux daemon runtime adapter validation | Kept core portable and CLI local-state based; verified Linux container builds/tests | Implement and run socket/inotify adapter validation on Linux x86-64/AArch64 |
 
 ## Exact Build And Test Status
 
-- `cmake --version`: failed, command not found.
-- `g++ --version`: failed, command not found.
-- `clang++ --version`: failed, command not found.
-- `cl`: failed, command not found.
-- `ninja --version`: failed, command not found.
+- Host `cmake --version`: failed, command not found.
+- Host `g++ --version`: failed, command not found.
+- Host `clang++ --version`: failed, command not found.
+- Host `cl`: failed, command not found.
+- Docker `docker --context desktop-linux build -f Dockerfile.dev -t forge-dev .`: passed.
+- Docker `cmake --preset debug`: passed.
+- Docker `cmake --build --preset debug`: passed with warnings as errors.
+- Docker `ctest --preset debug --output-on-failure`: passed, 1/1 CTest tests.
+- Docker `cmake --preset release`: passed.
+- Docker `cmake --build --preset release`: passed.
+- Docker `cmake --install build/release --prefix build/install-smoke`: passed.
 
-No compiler-backed test has been claimed as passed.
+Compiler-backed debug, release, tests, and install smoke have passed in the Docker Linux toolchain environment.
 
 ## Sanitizer Status
 
-Blocked by missing compiler/CMake toolchain.
+- Docker `cmake --preset asan`: passed.
+- Docker `cmake --build --preset asan`: passed.
+- Docker `ctest --preset asan --output-on-failure`: passed under ASan/UBSan.
+- Docker GCC TSan build passed, but runtime failed with `ThreadSanitizer: unexpected memory mapping`.
+- Docker Clang TSan build passed after adding `libclang-rt-18-dev`; direct run requires `--security-opt seccomp=unconfined` and passed under that mode.
 
 ## Fuzz Target Status
 
@@ -60,11 +71,11 @@ Sources exist for:
 - `forge_daemon_event_sequence_fuzz`
 - `forge_build_pipeline_fuzz`
 
-Smoke execution is blocked by missing compiler/CMake toolchain.
+Docker fuzz preset builds and all three smoke executables passed under ASan/UBSan.
 
 ## Documentation Status
 
-Required documentation files are present and describe intended implemented behavior plus current verification limits. They must be rechecked after compiler execution.
+Required documentation files are present and now include Docker build/test instructions and manifest CLI examples. They still need a broader final audit against full-version behavior.
 
 ## Performance Status
 
@@ -79,4 +90,4 @@ Benchmark scripts and budgets are documented. Numeric criteria are unverified in
 
 ## Last Verified Commit
 
-No compiler-verified commit exists in this environment. The latest implementation commit is `ca4c2e8` (`fix(protocol): harden framing and recovery validation`), the initial core implementation commit is `54aa070` (`feat(core): implement forge graph daemon core`), and the baseline commit is `af0feb2` (`chore(repo): establish forge implementation baseline`).
+Latest compiler-verified working tree includes manifest CLI and Docker tooling changes not yet committed at the time of this status update. The latest committed implementation commit is `ca4c2e8` (`fix(protocol): harden framing and recovery validation`), the initial core implementation commit is `54aa070` (`feat(core): implement forge graph daemon core`), and the baseline commit is `af0feb2` (`chore(repo): establish forge implementation baseline`).

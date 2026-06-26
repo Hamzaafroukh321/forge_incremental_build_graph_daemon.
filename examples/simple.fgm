@@ -1,0 +1,5 @@
+# Forge graph manifest used by README examples and CLI smoke tests.
+node core mock-core mode=debug
+node app mock-app mode=debug
+edge app core declared
+target app

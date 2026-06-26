@@ -9,6 +9,15 @@ cmake --preset release
 cmake --build --preset release
 ```
 
+When the host has Docker Desktop but no local C++ toolchain:
+
+```sh
+docker build -f Dockerfile.dev -t forge-dev .
+docker run --rm -v "$PWD:/work" forge-dev cmake --preset debug
+docker run --rm -v "$PWD:/work" forge-dev cmake --build --preset debug
+docker run --rm -v "$PWD:/work" forge-dev ctest --preset debug --output-on-failure
+```
+
 ## Test
 
 ```sh
@@ -32,9 +41,9 @@ ctest --preset tsan --output-on-failure
 ```sh
 cmake --preset fuzz
 cmake --build --preset fuzz
-./build/fuzz/fuzz/forge_fipc_decoder_fuzz -runs=1000
-./build/fuzz/fuzz/forge_daemon_event_sequence_fuzz -runs=1000
-./build/fuzz/fuzz/forge_build_pipeline_fuzz -runs=1000
+./build/fuzz/forge_fipc_decoder_fuzz
+./build/fuzz/forge_daemon_event_sequence_fuzz
+./build/fuzz/forge_build_pipeline_fuzz
 ```
 
 ## Layout

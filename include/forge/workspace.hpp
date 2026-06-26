@@ -89,7 +89,7 @@ class WorkspaceCore {
   [[nodiscard]] Result<BuildOutcome> build(const std::vector<NodeId>& targets, Executor& executor);
   [[nodiscard]] const BuildGraph& graph() const noexcept { return graph_; }
   [[nodiscard]] ArtifactStore& artifacts() noexcept { return artifacts_; }
-  [[nodiscard]] EventHub& events() noexcept { return events_; }
+  [[nodiscard]] EventHub& events() noexcept { return event_hub_; }
   [[nodiscard]] VirtualClock& clock() noexcept { return clock_; }
   [[nodiscard]] VirtualFileSystem& fs() noexcept { return fs_; }
 

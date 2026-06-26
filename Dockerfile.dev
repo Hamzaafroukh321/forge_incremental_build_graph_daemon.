@@ -1,0 +1,14 @@
+FROM ubuntu:24.04
+
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      build-essential \
+      ca-certificates \
+      clang \
+      cmake \
+      git \
+      libclang-rt-18-dev \
+      ninja-build \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /work

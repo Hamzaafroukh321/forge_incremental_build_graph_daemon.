@@ -1,0 +1,4 @@
+node source
+node app
+edge app source
+build app

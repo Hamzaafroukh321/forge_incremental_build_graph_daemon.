@@ -11,4 +11,10 @@ Specification budgets:
 | FIPC frame/backlog | 16 MiB frame / 8 MiB stream backlog |
 | Fuzz speed | >25k FIPC/s and >1k events/s |
 
-No numeric measurements are claimed in this environment because CMake and a C++ compiler are unavailable. Use `scripts/benchmark.py` after building on a supported host and record hardware, compiler, build type, and corpus.
+Docker smoke measurement on 2026-06-26:
+
+```text
+forge demo elapsed_seconds=0.019242
+```
+
+This only verifies that the benchmark harness runs in the Docker toolchain image. It does not satisfy the full throughput, latency, memory, or fuzz-speed budgets above. Full budget validation must record hardware, compiler, build type, corpus, command lines, and repeated-run statistics.

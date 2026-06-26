@@ -84,7 +84,7 @@ Required documentation files are present and now include Docker build/test instr
 
 ## Performance Status
 
-Benchmark scripts and budgets are documented. Numeric criteria are unverified in this environment.
+Benchmark scripts and budgets are documented. Docker `scripts/benchmark.py` smoke passed with `forge demo elapsed_seconds=0.019242`, but full numeric criteria remain unverified.
 
 ## Deviations
 

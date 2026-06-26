@@ -4,6 +4,7 @@
 #include "forge/manifest.hpp"
 
 #include <exception>
+#include <filesystem>
 #include <iostream>
 #include <iterator>
 #include <sstream>
@@ -388,6 +389,21 @@ void CasGcKeepsLeases() {
   require(store.gc() == 1, "unleased removed");
 }
 
+void DiskArtifactPublishReopens() {
+  const auto root = std::filesystem::temp_directory_path() / "forge-cas-disk-test";
+  std::filesystem::remove_all(root);
+  ArtifactStore writer_store(root);
+  ArtifactWriter writer;
+  writer.append(reinterpret_cast<const Byte*>("durable"), 7);
+  auto key = writer_store.publish(std::move(writer));
+  require(key.ok(), "disk artifact published");
+  ArtifactStore reader_store(root);
+  auto bytes = reader_store.read(key.value());
+  require(bytes.ok(), "disk artifact reopened");
+  require(bytes.value().size() == 7, "disk artifact size");
+  std::filesystem::remove_all(root);
+}
+
 }  // namespace
 
 int main() {
@@ -428,6 +444,7 @@ int main() {
       {"MalformedFrameRejected", MalformedFrameRejected},
       {"StaleFingerprintIgnored", StaleFingerprintIgnored},
       {"CasGcKeepsLeases", CasGcKeepsLeases},
+      {"DiskArtifactPublishReopens", DiskArtifactPublishReopens},
   };
   int failed = 0;
   for (const auto& [name, fn] : tests) {

@@ -4,7 +4,9 @@
 #include "forge/ids.hpp"
 
 #include <compare>
+#include <filesystem>
 #include <map>
+#include <optional>
 #include <set>
 
 namespace forge {
@@ -39,6 +41,9 @@ class ArtifactWriter {
 
 class ArtifactStore {
  public:
+  ArtifactStore() = default;
+  explicit ArtifactStore(std::filesystem::path root);
+
   [[nodiscard]] Result<ArtifactKey> publish(ArtifactWriter writer);
   [[nodiscard]] Result<Bytes> read(const ArtifactKey& key) const;
   [[nodiscard]] Result<void> acquire(const ArtifactKey& key);
@@ -47,6 +52,10 @@ class ArtifactStore {
   [[nodiscard]] bool contains(const ArtifactKey& key) const;
 
  private:
+  [[nodiscard]] std::filesystem::path object_path(const ArtifactKey& key) const;
+  [[nodiscard]] std::filesystem::path temp_path(const ArtifactKey& key) const;
+
+  std::optional<std::filesystem::path> root_;
   std::map<ArtifactKey, ArtifactObject> objects_;
 };
 

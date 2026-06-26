@@ -8,7 +8,7 @@ Forge is split into a portable core and platform adapters.
 - `FileEventCoalescer` keeps one current token per normalized path and rejects stale fingerprint completions.
 - `ExecutorManager` issues move-only worker authority through `WorkerLease` values and rejects stale attempt generations.
 - `ArtifactStore` publishes immutable CAS objects only after digest verification.
-- `StateCodec` and `AppendLog` encode FST-1 records and replay only committed transaction prefixes.
+- `StateCodec`, `AppendLog`, and `FileStateStore` encode FST-1 records, append durable transactions, rotate checkpoints, and replay only committed transaction prefixes.
 - `EventHub` applies byte credit and keeps terminal events even when progress is dropped.
 
 Mutable workspace state is not thread-safe. Worker, watcher, and protocol completions must cross into the workspace with owned values and generation tokens.
@@ -26,4 +26,4 @@ Callbacks must not run while holding mutation locks.
 
 ## State Machines
 
-The implemented state machines follow the specification: accepted to negotiated FIPC sessions, stream activation with generation reuse rules, file event pending/stabilizing completion tokens, job lease generation validation, terminal event retention, and committed-prefix recovery.
+The implemented state machines follow the specification: accepted to negotiated FIPC sessions, stream activation with generation reuse rules, file event pending/stabilizing completion tokens, job lease generation validation, terminal event retention, durable checkpoint/log replay, and committed-prefix recovery.

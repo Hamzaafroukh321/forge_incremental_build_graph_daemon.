@@ -10,4 +10,6 @@ Failure points:
 - State success referencing missing CAS: safe inconsistency report; no success may be exposed.
 - Running lease at restart: converted to lost unless committed success exists.
 
-Current implementation provides in-memory FST replay logic. Filesystem fsync, atomic rename, checkpoint rotation, and Linux process restart validation require target-platform verification.
+The current implementation includes CRC-checked in-memory FST replay plus a filesystem-backed state store. The store appends committed transactions to `state.log`, writes checkpoints through a temporary file and rename to `checkpoint.fst`, rotates the log after checkpoint publication, and compacts a corrupt or partial crash tail back to the last committed prefix before accepting new transactions.
+
+Full fsync/barrier policy and Linux process restart validation still require target-platform verification.

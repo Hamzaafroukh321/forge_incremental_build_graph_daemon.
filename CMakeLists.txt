@@ -42,6 +42,7 @@ add_library(forge_core
   src/artifact/gc.cpp
   src/state/state_codec.cpp
   src/state/append_log.cpp
+  src/state/file_state_store.cpp
   src/state/checkpoint.cpp
   src/state/recovery.cpp
   src/state/compact.cpp

@@ -5,6 +5,7 @@
 
 #include <exception>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <iterator>
 #include <sstream>
@@ -303,6 +304,59 @@ void CheckpointLogRotationReplay() {
   require(log.replay().ok() && log.replay().value().size() == 1, "checkpoint replay");
 }
 
+void FileStateStoreReopensCommittedLog() {
+  const auto root = std::filesystem::temp_directory_path() / "forge-state-file-test";
+  std::filesystem::remove_all(root);
+  FileStateStore writer(root);
+  require(writer.append_transaction(1, 0, 2, {StateRecord{StateRecordType::graph_delta, 1, 0, 0, Bytes{1}}}).ok(),
+          "file transaction appended");
+  FileStateStore reader(root);
+  auto recovered = reader.recover();
+  require(recovered.ok(), "file state recovered");
+  require(recovered.value().sequence == 2, "file sequence recovered");
+  require(recovered.value().committed_records.size() == 1, "file record recovered");
+  std::filesystem::remove_all(root);
+}
+
+void FileStateStoreCompactsCrashTailBeforeAppend() {
+  const auto root = std::filesystem::temp_directory_path() / "forge-state-file-tail-test";
+  std::filesystem::remove_all(root);
+  FileStateStore store(root);
+  require(store.append_transaction(1, 0, 2, {StateRecord{StateRecordType::graph_delta, 1, 0, 0, Bytes{1}}}).ok(),
+          "first transaction appended");
+  {
+    std::ofstream output(root / "state.log", std::ios::binary | std::ios::app);
+    output.put(static_cast<char>(0xff));
+    output.put(static_cast<char>(0x01));
+  }
+  auto with_tail = store.recover();
+  require(with_tail.ok(), "tail recovery ok");
+  require(with_tail.value().committed_records.size() == 1, "tail ignored");
+  require(!with_tail.value().diagnostics.empty(), "tail diagnosed");
+  require(store.append_transaction(2, 2, 3, {StateRecord{StateRecordType::input_delta, 2, 0, 0, Bytes{2}}}).ok(),
+          "append after tail");
+  auto recovered = store.recover();
+  require(recovered.ok(), "compacted state recovered");
+  require(recovered.value().sequence == 3, "compacted sequence");
+  require(recovered.value().committed_records.size() == 2, "both committed records recovered");
+  std::filesystem::remove_all(root);
+}
+
+void FileStateStoreCheckpointRotatesLog() {
+  const auto root = std::filesystem::temp_directory_path() / "forge-state-checkpoint-test";
+  std::filesystem::remove_all(root);
+  FileStateStore store(root);
+  require(store.append_transaction(1, 0, 2, {StateRecord{StateRecordType::graph_delta, 1, 0, 0, Bytes{1}}}).ok(),
+          "pre-checkpoint transaction appended");
+  require(store.checkpoint(5, Bytes{9, 9}).ok(), "checkpoint written");
+  auto recovered = store.recover();
+  require(recovered.ok(), "checkpoint state recovered");
+  require(recovered.value().sequence == 5, "checkpoint sequence");
+  require(recovered.value().committed_records.size() == 1, "checkpoint replaces log");
+  require(recovered.value().committed_records.front().type == StateRecordType::checkpoint, "checkpoint record recovered");
+  std::filesystem::remove_all(root);
+}
+
 void MissingCasBlocksRecoveredSuccess() {
   ArtifactStore store;
   ArtifactKey key{digest_bytes("artifact", Bytes{static_cast<Byte>('x')}), 1};
@@ -433,6 +487,9 @@ int main() {
       {"CrashEveryStateRecordBoundary", CrashEveryStateRecordBoundary},
       {"BadCommitDigestIgnored", BadCommitDigestIgnored},
       {"CheckpointLogRotationReplay", CheckpointLogRotationReplay},
+      {"FileStateStoreReopensCommittedLog", FileStateStoreReopensCommittedLog},
+      {"FileStateStoreCompactsCrashTailBeforeAppend", FileStateStoreCompactsCrashTailBeforeAppend},
+      {"FileStateStoreCheckpointRotatesLog", FileStateStoreCheckpointRotatesLog},
       {"MissingCasBlocksRecoveredSuccess", MissingCasBlocksRecoveredSuccess},
       {"SlowClientTerminalRetained", SlowClientTerminalRetained},
       {"WatcherRootRescanAfterRestart", WatcherRootRescanAfterRestart},

@@ -13,10 +13,11 @@ Phase 0 through Phase 7 are represented in the repository with C++20 source, CMa
 - `FORGE-009`, `FORGE-010`, `FORGE-012`, and `FORGE-013` were hardened in `ca4c2e8` with corrected FIPC frame layout, stream-generation retirement, FST declared-count/digest replay checks, and stricter test setup assertions.
 - `FORGE-017` advanced with manifest-backed `forge graph apply` and `forge build` workflows, plus Docker-backed build/test/sanitizer/fuzz smoke evidence.
 - `FORGE-026` advanced with filesystem-backed CAS publication and reopen verification.
+- `FORGE-013` and `FORGE-028` advanced with filesystem-backed FST append, checkpoint rotation, restart replay, and crash-tail compaction.
 
 ## Next Actionable Ticket
 
-Install or provide a CMake + C++20 toolchain, then run the debug build and fix any compile/test failures before marking requirements verified.
+Implement the remaining Linux runtime adapters and persistent daemon services, then run long-running validation and performance budget checks.
 
 ## Completed Modules
 
@@ -24,7 +25,7 @@ Install or provide a CMake + C++20 toolchain, then run the debug build and fix a
 - CMake target definitions and presets.
 - Public headers for errors, IDs, codecs, graph, executor, artifacts, state, workspace, client, and daemon.
 - Source modules for FIPC/FST, graph, scheduler, workspace coalescing, mock execution, CAS, event crediting, and CLI entry points.
-- Named unit/integration tests and fuzz smoke harness sources. The unit harness currently registers 37 named tests.
+- Named unit/integration tests and fuzz smoke harness sources. The unit harness currently registers 40 named tests.
 - Documentation deliverables required by Section 24.
 
 ## In Progress Modules
@@ -91,4 +92,4 @@ Benchmark scripts and budgets are documented. Numeric criteria are unverified in
 
 ## Last Verified Commit
 
-Latest compiler-verified committed baseline is `0774bb3` (`feat(cli): add manifest graph workflow`). The current working tree additionally includes filesystem-backed CAS changes verified by Docker debug/release/ASan tests but not yet committed at the time of this status update. Earlier implementation commits include `ca4c2e8`, `54aa070`, and `af0feb2`.
+Latest compiler-verified committed baseline is `5022691` (`feat(artifact): persist CAS objects to disk`). Earlier implementation commits include `0774bb3`, `ca4c2e8`, `54aa070`, and `af0feb2`.

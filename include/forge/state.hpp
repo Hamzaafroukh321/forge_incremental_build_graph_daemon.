@@ -3,6 +3,8 @@
 #include "forge/error.hpp"
 #include "forge/graph.hpp"
 
+#include <filesystem>
+
 namespace forge {
 
 enum class StateRecordType : std::uint16_t {
@@ -49,5 +51,28 @@ struct RecoveryResult {
 };
 
 [[nodiscard]] RecoveryResult recover_log(const Bytes& bytes);
+
+class FileStateStore {
+ public:
+  explicit FileStateStore(std::filesystem::path root);
+
+  [[nodiscard]] Result<void> append_transaction(std::uint64_t txn_id,
+                                                std::uint64_t base_sequence,
+                                                std::uint64_t new_sequence,
+                                                std::vector<StateRecord> records);
+  [[nodiscard]] Result<void> checkpoint(std::uint64_t sequence, Bytes payload);
+  [[nodiscard]] Result<RecoveryResult> recover() const;
+
+ private:
+  [[nodiscard]] std::filesystem::path log_path() const;
+  [[nodiscard]] std::filesystem::path checkpoint_path() const;
+  [[nodiscard]] std::filesystem::path temp_path(std::string_view name) const;
+  [[nodiscard]] Result<Bytes> read_file(const std::filesystem::path& path) const;
+  [[nodiscard]] Result<void> replace_file(const std::filesystem::path& path, const Bytes& bytes) const;
+  [[nodiscard]] Result<void> append_file(const std::filesystem::path& path, const Bytes& bytes) const;
+  [[nodiscard]] Result<Bytes> clean_log_bytes(const Bytes& bytes) const;
+
+  std::filesystem::path root_;
+};
 
 }  // namespace forge

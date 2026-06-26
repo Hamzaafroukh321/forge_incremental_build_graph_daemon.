@@ -1,0 +1,79 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "FORGE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release",
+      "inherits": "debug",
+      "binaryDir": "${sourceDir}/build/release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "asan",
+      "displayName": "ASan UBSan",
+      "inherits": "debug",
+      "binaryDir": "${sourceDir}/build/asan",
+      "cacheVariables": {
+        "FORGE_ENABLE_SANITIZERS": "ON",
+        "FORGE_SANITIZER_SET": "address,undefined"
+      }
+    },
+    {
+      "name": "tsan",
+      "displayName": "TSan",
+      "inherits": "debug",
+      "binaryDir": "${sourceDir}/build/tsan",
+      "cacheVariables": {
+        "FORGE_ENABLE_SANITIZERS": "ON",
+        "FORGE_SANITIZER_SET": "thread"
+      }
+    },
+    {
+      "name": "fuzz",
+      "displayName": "Fuzz",
+      "inherits": "debug",
+      "binaryDir": "${sourceDir}/build/fuzz",
+      "cacheVariables": {
+        "FORGE_ENABLE_FUZZING": "ON",
+        "FORGE_ENABLE_SANITIZERS": "ON",
+        "FORGE_SANITIZER_SET": "address,undefined"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "debug", "configurePreset": "debug" },
+    { "name": "release", "configurePreset": "release" },
+    { "name": "asan", "configurePreset": "asan" },
+    { "name": "tsan", "configurePreset": "tsan" },
+    { "name": "fuzz", "configurePreset": "fuzz" }
+  ],
+  "testPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "asan",
+      "configurePreset": "asan",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "tsan",
+      "configurePreset": "tsan",
+      "output": { "outputOnFailure": true }
+    }
+  ]
+}

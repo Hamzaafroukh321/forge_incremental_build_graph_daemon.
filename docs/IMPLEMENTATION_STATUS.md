@@ -10,6 +10,7 @@ Phase 0 through Phase 7 are represented in the repository with C++20 source, CMa
 
 - `FORGE-001` repository/build/test/fuzz structure drafted.
 - `FORGE-002` through `FORGE-037` have initial production-linked implementations and tests, but are not marked verified until compiled and executed.
+- `FORGE-009`, `FORGE-010`, `FORGE-012`, and `FORGE-013` were hardened in `ca4c2e8` with corrected FIPC frame layout, stream-generation retirement, FST declared-count/digest replay checks, and stricter test setup assertions.
 
 ## Next Actionable Ticket
 
@@ -21,7 +22,7 @@ Install or provide a CMake + C++20 toolchain, then run the debug build and fix a
 - CMake target definitions and presets.
 - Public headers for errors, IDs, codecs, graph, executor, artifacts, state, workspace, client, and daemon.
 - Source modules for FIPC/FST, graph, scheduler, workspace coalescing, mock execution, CAS, event crediting, and CLI entry points.
-- Named unit/integration tests and fuzz smoke harness sources.
+- Named unit/integration tests and fuzz smoke harness sources. The unit harness currently registers 35 named tests.
 - Documentation deliverables required by Section 24.
 
 ## In Progress Modules
@@ -78,4 +79,4 @@ Benchmark scripts and budgets are documented. Numeric criteria are unverified in
 
 ## Last Verified Commit
 
-No compiler-verified commit exists in this environment. The latest implementation commit is `54aa070` (`feat(core): implement forge graph daemon core`) and the baseline commit is `af0feb2` (`chore(repo): establish forge implementation baseline`).
+No compiler-verified commit exists in this environment. The latest implementation commit is `ca4c2e8` (`fix(protocol): harden framing and recovery validation`), the initial core implementation commit is `54aa070` (`feat(core): implement forge graph daemon core`), and the baseline commit is `af0feb2` (`chore(repo): establish forge implementation baseline`).

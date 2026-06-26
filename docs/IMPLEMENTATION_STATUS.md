@@ -90,4 +90,4 @@ Benchmark scripts and budgets are documented. Numeric criteria are unverified in
 
 ## Last Verified Commit
 
-Latest compiler-verified working tree includes manifest CLI and Docker tooling changes not yet committed at the time of this status update. The latest committed implementation commit is `ca4c2e8` (`fix(protocol): harden framing and recovery validation`), the initial core implementation commit is `54aa070` (`feat(core): implement forge graph daemon core`), and the baseline commit is `af0feb2` (`chore(repo): establish forge implementation baseline`).
+Latest compiler-verified commit is `0774bb3` (`feat(cli): add manifest graph workflow`). Earlier implementation commits include `ca4c2e8` (`fix(protocol): harden framing and recovery validation`), `54aa070` (`feat(core): implement forge graph daemon core`), and `af0feb2` (`chore(repo): establish forge implementation baseline`).

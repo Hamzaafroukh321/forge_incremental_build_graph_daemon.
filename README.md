@@ -35,4 +35,4 @@ The demo creates an in-memory graph and runs the deterministic mock executor. It
 
 ## Maturity
 
-Core source, tests, fuzz harnesses, and docs are present. Docker-backed compiler verification, sanitizer tests, fuzz smoke, and a Linux Unix-domain socket status round trip have passed. Inotify adapter validation, long-running daemon soak, and performance measurements remain required before production use.
+Core source, tests, fuzz harnesses, and docs are present. Docker-backed compiler verification, sanitizer tests, fuzz smoke, a Linux Unix-domain socket status round trip, and an inotify event smoke have passed. Long-running daemon soak and performance measurements remain required before production use.

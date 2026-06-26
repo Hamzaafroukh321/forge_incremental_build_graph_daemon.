@@ -16,11 +16,11 @@ Validation: Named tests cover malformed frames, graph conflicts, stale leases, a
 
 Context: The specification targets Linux Unix-domain sockets and inotify-compatible watchers, while this development environment is Windows and lacks a C++ toolchain.
 
-Decision: Implement the production core, FIPC codec, session state, workspace model, and CLI state workflows portably. Linux socket/watcher bindings remain adapter entry points and must be validated on Linux; the first Unix-domain socket status adapter is now covered in Docker.
+Decision: Implement the production core, FIPC codec, session state, workspace model, and CLI state workflows portably. Linux socket/watcher bindings remain adapter entry points and must be validated on Linux; the first Unix-domain socket status adapter and single-root inotify adapter are now covered in Docker.
 
 Alternatives: Write Linux-only code that cannot be compiled or exercised here; or use a third-party portability layer before license review.
 
-Consequences: Core behavior is testable without kernel watchers. Docker now provides Linux compiler validation and a Unix-domain socket status smoke, but inotify and long-running daemon runtime validation remain pending until those adapters are implemented and exercised.
+Consequences: Core behavior is testable without long-running kernel services. Docker now provides Linux compiler validation, a Unix-domain socket status smoke, and an inotify file-change smoke; recursive watcher registration and long-running daemon runtime validation remain pending.
 
 Validation: Portable tests drive the same core entry points that Linux adapters will feed.
 

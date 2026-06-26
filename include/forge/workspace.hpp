@@ -59,6 +59,29 @@ struct InputFingerprint {
   Generation epoch{};
 };
 
+struct WatchEvent {
+  NormalizedPath path;
+  FileEventKind kind{FileEventKind::modify};
+};
+
+class InotifyWatcher {
+ public:
+  explicit InotifyWatcher(std::filesystem::path root);
+  ~InotifyWatcher();
+
+  InotifyWatcher(const InotifyWatcher&) = delete;
+  InotifyWatcher& operator=(const InotifyWatcher&) = delete;
+
+  [[nodiscard]] Result<void> start();
+  [[nodiscard]] Result<std::vector<WatchEvent>> poll_events(int timeout_ms);
+  [[nodiscard]] Result<void> stop();
+
+ private:
+  std::filesystem::path root_;
+  int fd_{-1};
+  int watch_fd_{-1};
+};
+
 class FileEventCoalescer {
  public:
   explicit FileEventCoalescer(std::uint64_t debounce_ticks = 5);

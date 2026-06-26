@@ -459,6 +459,36 @@ void StaleFingerprintIgnored() {
   require(!stale.ok(), "stale completion rejected");
 }
 
+void InotifyWatcherReportsFileChange() {
+#ifdef _WIN32
+  require(true, "inotify skipped on Windows");
+#else
+  const auto root = std::filesystem::temp_directory_path() / "forge-inotify-test";
+  std::filesystem::remove_all(root);
+  std::filesystem::create_directories(root);
+  InotifyWatcher watcher(root);
+  require(watcher.start().ok(), "inotify watcher started");
+  {
+    std::ofstream output(root / "input.txt", std::ios::binary | std::ios::trunc);
+    output << "changed";
+  }
+  bool saw_input = false;
+  for (int i = 0; i < 20 && !saw_input; ++i) {
+    auto events = watcher.poll_events(100);
+    require(events.ok(), "inotify poll ok");
+    for (const auto& event : events.value()) {
+      if (event.path.relative == "input.txt" &&
+          (event.kind == FileEventKind::create || event.kind == FileEventKind::modify)) {
+        saw_input = true;
+      }
+    }
+  }
+  require(saw_input, "inotify saw input change");
+  require(watcher.stop().ok(), "inotify watcher stopped");
+  std::filesystem::remove_all(root);
+#endif
+}
+
 void CasGcKeepsLeases() {
   ArtifactStore store;
   ArtifactWriter writer;
@@ -528,6 +558,7 @@ int main() {
       {"FuzzerRegressionBundles", FuzzerRegressionBundles},
       {"MalformedFrameRejected", MalformedFrameRejected},
       {"StaleFingerprintIgnored", StaleFingerprintIgnored},
+      {"InotifyWatcherReportsFileChange", InotifyWatcherReportsFileChange},
       {"CasGcKeepsLeases", CasGcKeepsLeases},
       {"DiskArtifactPublishReopens", DiskArtifactPublishReopens},
   };

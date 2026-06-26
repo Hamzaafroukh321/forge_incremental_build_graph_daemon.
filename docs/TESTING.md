@@ -12,6 +12,7 @@ The primary test executable is `forge_tests`. It contains named tests for:
 - Event-hub backpressure and terminal retention.
 - Manifest-backed CLI graph/build workflow.
 - Linux Unix-domain FIPC status round trip.
+- Linux inotify file-change event smoke.
 
 Run:
 

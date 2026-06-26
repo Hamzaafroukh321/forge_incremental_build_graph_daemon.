@@ -95,4 +95,4 @@ Benchmark scripts and budgets are documented. Docker `scripts/benchmark.py` smok
 
 ## Last Verified Commit
 
-Latest compiler-verified committed baseline is `c10b054` (`feat(workspace): add Linux inotify watcher adapter`). Earlier implementation commits include `5de0292`, `3e58530`, `5022691`, `0774bb3`, `ca4c2e8`, `54aa070`, and `af0feb2`.
+Latest compiler-verified committed baseline is `163a3b4` (`docs(status): record benchmark smoke verification`). Earlier implementation commits include `c10b054`, `5de0292`, `3e58530`, `5022691`, `0774bb3`, `ca4c2e8`, `54aa070`, and `af0feb2`.

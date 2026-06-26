@@ -78,4 +78,4 @@ Benchmark scripts and budgets are documented. Numeric criteria are unverified in
 
 ## Last Verified Commit
 
-No commit was available when implementation began because the repository was cloned empty.
+No compiler-verified commit exists in this environment. The latest implementation commit is `54aa070` (`feat(core): implement forge graph daemon core`) and the baseline commit is `af0feb2` (`chore(repo): establish forge implementation baseline`).

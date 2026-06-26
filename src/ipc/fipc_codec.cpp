@@ -4,7 +4,7 @@
 
 namespace forge {
 namespace {
-constexpr std::size_t kFrameHeaderSize = 36;
+constexpr std::size_t kFrameHeaderSize = 40;
 
 Status protocol_error(std::string message) {
   return Status::error(ErrorCode::protocol, "fipc", std::move(message));
@@ -26,10 +26,10 @@ Bytes FipcCodec::encode(const FipcFrame& frame) const {
   append_u32_le(out, 0);
   append_u32_le(out, crc32c(frame.payload));
   const std::uint32_t header_crc = crc32c(out.data(), kFrameHeaderSize - 8);
-  out[28] = static_cast<Byte>(header_crc & 0xffU);
-  out[29] = static_cast<Byte>((header_crc >> 8U) & 0xffU);
-  out[30] = static_cast<Byte>((header_crc >> 16U) & 0xffU);
-  out[31] = static_cast<Byte>((header_crc >> 24U) & 0xffU);
+  out[32] = static_cast<Byte>(header_crc & 0xffU);
+  out[33] = static_cast<Byte>((header_crc >> 8U) & 0xffU);
+  out[34] = static_cast<Byte>((header_crc >> 16U) & 0xffU);
+  out[35] = static_cast<Byte>((header_crc >> 24U) & 0xffU);
   out.insert(out.end(), frame.payload.begin(), frame.payload.end());
   return out;
 }
@@ -53,19 +53,19 @@ DecodeResult FipcCodec::feed(const Byte* data, std::size_t size) {
     return DecodeResult{DecodeState::need_more, std::nullopt, len_result.status()};
   }
   const std::uint32_t frame_len = len_result.value();
-  if (frame_len < kFrameHeaderSize || frame_len > limits_.max_frame_bytes) {
+  if (static_cast<std::size_t>(frame_len) < kFrameHeaderSize || frame_len > limits_.max_frame_bytes) {
     closed_ = true;
     return DecodeResult{DecodeState::closed, std::nullopt, protocol_error("invalid frame length")};
   }
-  if (buffer_.size() < frame_len) {
+  if (buffer_.size() < static_cast<std::size_t>(frame_len)) {
     return {};
   }
   Bytes header(buffer_.begin(), buffer_.begin() + static_cast<std::ptrdiff_t>(kFrameHeaderSize));
-  const auto expected_header_crc = read_u32_le(header, 28).value();
-  header[28] = 0;
-  header[29] = 0;
-  header[30] = 0;
-  header[31] = 0;
+  const auto expected_header_crc = read_u32_le(header, 32).value();
+  header[32] = 0;
+  header[33] = 0;
+  header[34] = 0;
+  header[35] = 0;
   if (crc32c(header.data(), kFrameHeaderSize - 8) != expected_header_crc) {
     closed_ = true;
     return DecodeResult{DecodeState::closed, std::nullopt, protocol_error("header crc mismatch")};
@@ -77,13 +77,13 @@ DecodeResult FipcCodec::feed(const Byte* data, std::size_t size) {
   frame.stream_generation = read_u32_le(buffer_, 12).value();
   frame.sequence = read_u64_le(buffer_, 16).value();
   frame.request_token = read_u64_le(buffer_, 24).value();
-  const auto payload_crc = read_u32_le(buffer_, 32).value();
-  frame.payload.assign(buffer_.begin() + static_cast<std::ptrdiff_t>(kFrameHeaderSize), buffer_.begin() + frame_len);
+  const auto payload_crc = read_u32_le(buffer_, 36).value();
+  frame.payload.assign(buffer_.begin() + static_cast<std::ptrdiff_t>(kFrameHeaderSize), buffer_.begin() + static_cast<std::ptrdiff_t>(frame_len));
   if (frame.payload.size() > limits_.max_payload_bytes || crc32c(frame.payload) != payload_crc) {
     closed_ = true;
     return DecodeResult{DecodeState::closed, std::nullopt, protocol_error("payload crc mismatch")};
   }
-  buffer_.erase(buffer_.begin(), buffer_.begin() + frame_len);
+  buffer_.erase(buffer_.begin(), buffer_.begin() + static_cast<std::ptrdiff_t>(frame_len));
   return DecodeResult{DecodeState::frame, std::move(frame), Status::success()};
 }
 

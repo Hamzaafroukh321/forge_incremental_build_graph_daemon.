@@ -47,7 +47,10 @@ Result<BuildOutcome> WorkspaceCore::build(const std::vector<NodeId>& targets, Ex
   RequestId request{next_request_++};
   ExecutorManager manager(executor);
   BuildOutcome outcome{request, {}, {}};
-  event_hub_.open_stream(static_cast<std::uint32_t>(request.value), 1024 * 1024);
+  auto opened = event_hub_.open_stream(static_cast<std::uint32_t>(request.value), 1024 * 1024);
+  if (!opened.ok()) {
+    return opened.status();
+  }
   std::map<std::string, JobId> active_by_key;
   for (NodeId node_id : order.value()) {
     const auto node_it = graph_.nodes().find(node_id);

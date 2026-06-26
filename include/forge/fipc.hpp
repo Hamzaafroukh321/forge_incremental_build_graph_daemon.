@@ -94,6 +94,7 @@ class FipcSession {
   FipcCodec codec_;
   SessionState state_{SessionState::accepted};
   std::map<std::uint32_t, StreamState> streams_;
+  std::map<std::uint32_t, std::uint32_t> retired_stream_generations_;
   std::map<std::uint64_t, Bytes> idempotency_;
 };
 

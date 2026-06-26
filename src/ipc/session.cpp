@@ -68,7 +68,10 @@ Result<void> FipcSession::apply_frame(const FipcFrame& frame, std::vector<Sessio
   }
   if (state_ == SessionState::negotiated && frame.type == FrameType::open_stream) {
     auto existing = streams_.find(frame.stream_id);
-    if (frame.stream_id == 0 || (existing != streams_.end() && frame.stream_generation <= existing->second.generation)) {
+    const auto retired = retired_stream_generations_.find(frame.stream_id);
+    if (frame.stream_id == 0 ||
+        (existing != streams_.end() && frame.stream_generation <= existing->second.generation) ||
+        (retired != retired_stream_generations_.end() && frame.stream_generation <= retired->second)) {
       return Status::error(ErrorCode::protocol, "fipc-session", "illegal stream reuse");
     }
     if (streams_.size() >= limits_.max_streams) {
@@ -110,6 +113,7 @@ Result<void> FipcSession::apply_frame(const FipcFrame& frame, std::vector<Sessio
     idempotency_[frame.request_token] = frame.payload;
   }
   if (frame.type == FrameType::close_stream && stream != streams_.end()) {
+    retired_stream_generations_[frame.stream_id] = stream->second.generation;
     streams_.erase(stream);
     state_ = streams_.empty() ? SessionState::negotiated : SessionState::active;
   }

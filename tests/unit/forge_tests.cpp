@@ -62,6 +62,12 @@ void StreamReuseNeedsGeneration() {
   require(session.feed(close.data(), close.size()).ok(), "close");
   auto reopen_same = codec.encode(frame(FrameType::open_stream, 9, 1, 0));
   require(!session.feed(reopen_same.data(), reopen_same.size()).ok(), "same generation rejected");
+  FipcSession fresh;
+  require(fresh.feed(hello.data(), hello.size()).ok(), "fresh hello");
+  require(fresh.feed(open1.data(), open1.size()).ok(), "fresh open");
+  require(fresh.feed(close.data(), close.size()).ok(), "fresh close");
+  auto reopen_next = codec.encode(frame(FrameType::open_stream, 9, 2, 0));
+  require(fresh.feed(reopen_next.data(), reopen_next.size()).ok(), "higher generation accepted");
 }
 
 void CreditNeverNegative() {
@@ -94,10 +100,10 @@ BuildGraph diamond_graph(NodeId* app = nullptr, NodeId* liba = nullptr, NodeId* 
   auto a = graph.put_node("a", ActionSpec{"a", {}}).value();
   auto b = graph.put_node("b", ActionSpec{"b", {}}).value();
   auto p = graph.put_node("app", ActionSpec{"app", {}}).value();
-  graph.put_edge(a, c, EdgeKind::declared);
-  graph.put_edge(b, c, EdgeKind::declared);
-  graph.put_edge(p, a, EdgeKind::declared);
-  graph.put_edge(p, b, EdgeKind::declared);
+  require(graph.put_edge(a, c, EdgeKind::declared).ok(), "edge a->core");
+  require(graph.put_edge(b, c, EdgeKind::declared).ok(), "edge b->core");
+  require(graph.put_edge(p, a, EdgeKind::declared).ok(), "edge app->a");
+  require(graph.put_edge(p, b, EdgeKind::declared).ok(), "edge app->b");
   if (app) *app = p;
   if (liba) *liba = a;
   if (libb) *libb = b;
@@ -124,7 +130,7 @@ void DirtyChainReasonPath() {
 
 void UnchangedContentNoInvalidation() {
   WorkspaceCore ws(".");
-  ws.fs().write("a.txt", Bytes{'x'});
+  ws.fs().write("a.txt", Bytes{static_cast<Byte>('x')});
   require(ws.file_event("a.txt", FileEventKind::modify).ok(), "first hash");
   require(ws.file_event("a.txt", FileEventKind::modify).ok(), "same hash accepted");
 }
@@ -133,8 +139,8 @@ void DynamicCycleWitnessStable() {
   BuildGraph graph;
   auto a = graph.put_node("a", ActionSpec{"a", {}}).value();
   auto b = graph.put_node("b", ActionSpec{"b", {}}).value();
-  graph.put_edge(a, b, EdgeKind::declared);
-  graph.put_edge(b, a, EdgeKind::discovered);
+  require(graph.put_edge(a, b, EdgeKind::declared).ok(), "edge a->b");
+  require(graph.put_edge(b, a, EdgeKind::discovered).ok(), "edge b->a");
   auto cycle = graph.cycle_witness();
   require(cycle.has_value() && cycle->nodes.size() >= 3, "cycle witness");
 }
@@ -154,10 +160,10 @@ void DiamondRunsEachNodeOnce() {
   auto a = ws.put_node("a", ActionSpec{"a", {}}).value();
   auto b = ws.put_node("b", ActionSpec{"b", {}}).value();
   auto app = ws.put_node("app", ActionSpec{"app", {}}).value();
-  ws.put_edge(a, c);
-  ws.put_edge(b, c);
-  ws.put_edge(app, a);
-  ws.put_edge(app, b);
+  require(ws.put_edge(a, c).ok(), "edge a->core");
+  require(ws.put_edge(b, c).ok(), "edge b->core");
+  require(ws.put_edge(app, a).ok(), "edge app->a");
+  require(ws.put_edge(app, b).ok(), "edge app->b");
   DeterministicMockExecutor executor;
   auto result = ws.build({app}, executor);
   require(result.ok(), "diamond builds");
@@ -213,7 +219,7 @@ void DiscoveryTriggersRestabilization() {
   auto a = graph.put_node("a", ActionSpec{"a", {}}).value();
   auto b = graph.put_node("b", ActionSpec{"b", {}}).value();
   auto before = graph.generation();
-  graph.put_edge(a, b, EdgeKind::discovered);
+  require(graph.put_edge(a, b, EdgeKind::discovered).ok(), "discovered edge");
   require(graph.generation() > before, "discovery advances graph");
 }
 
@@ -254,17 +260,30 @@ void CrashEveryStateRecordBoundary() {
   require(truncated.committed_records.empty(), "partial ignored");
 }
 
+void BadCommitDigestIgnored() {
+  AppendLog log;
+  require(log.begin(1, 0, 1).ok(), "begin");
+  require(log.append(StateRecord{StateRecordType::graph_delta, 1, 0, 0, Bytes{1}}).ok(), "delta");
+  require(log.commit(1, 2).ok(), "commit");
+  auto corrupt = log.bytes();
+  require(!corrupt.empty(), "has bytes");
+  corrupt[corrupt.size() - 8] ^= 0x7fU;
+  auto recovered = recover_log(corrupt);
+  require(recovered.committed_records.empty(), "bad digest ignored");
+  require(!recovered.diagnostics.empty(), "bad digest diagnosed");
+}
+
 void CheckpointLogRotationReplay() {
   AppendLog log;
-  log.begin(9, 0, 1);
-  log.append(StateRecord{StateRecordType::checkpoint, 9, 0, 0, Bytes{4, 5}});
-  log.commit(9, 10);
+  require(log.begin(9, 0, 1).ok(), "checkpoint begin");
+  require(log.append(StateRecord{StateRecordType::checkpoint, 9, 0, 0, Bytes{4, 5}}).ok(), "checkpoint append");
+  require(log.commit(9, 10).ok(), "checkpoint commit");
   require(log.replay().ok() && log.replay().value().size() == 1, "checkpoint replay");
 }
 
 void MissingCasBlocksRecoveredSuccess() {
   ArtifactStore store;
-  ArtifactKey key{digest_bytes("artifact", Bytes{'x'}), 1};
+  ArtifactKey key{digest_bytes("artifact", Bytes{static_cast<Byte>('x')}), 1};
   require(!store.contains(key), "missing cas not valid");
 }
 
@@ -314,7 +333,7 @@ void ShutdownWithQueuedResults() {
 
 void FuzzerRegressionBundles() {
   FipcCodec codec;
-  auto bytes = codec.encode(frame(FrameType::hello, 0, 0, 0, Bytes{'f', 'z'}));
+  auto bytes = codec.encode(frame(FrameType::hello, 0, 0, 0, Bytes{static_cast<Byte>('f'), static_cast<Byte>('z')}));
   auto decoded = codec.feed(bytes.data(), bytes.size());
   require(decoded.frame.has_value(), "fuzzer seed decodes");
 }
@@ -342,9 +361,9 @@ void CasGcKeepsLeases() {
   ArtifactWriter writer;
   writer.append(reinterpret_cast<const Byte*>("x"), 1);
   auto key = store.publish(std::move(writer)).value();
-  store.acquire(key);
+  require(store.acquire(key).ok(), "acquire lease");
   require(store.gc() == 0, "leased retained");
-  store.release(key);
+  require(store.release(key).ok(), "release lease");
   require(store.gc() == 1, "unleased removed");
 }
 
@@ -374,6 +393,7 @@ int main() {
       {"MultiArtifactCommitAtomic", MultiArtifactCommitAtomic},
       {"ExecutorTimeoutRetryGeneration", ExecutorTimeoutRetryGeneration},
       {"CrashEveryStateRecordBoundary", CrashEveryStateRecordBoundary},
+      {"BadCommitDigestIgnored", BadCommitDigestIgnored},
       {"CheckpointLogRotationReplay", CheckpointLogRotationReplay},
       {"MissingCasBlocksRecoveredSuccess", MissingCasBlocksRecoveredSuccess},
       {"SlowClientTerminalRetained", SlowClientTerminalRetained},

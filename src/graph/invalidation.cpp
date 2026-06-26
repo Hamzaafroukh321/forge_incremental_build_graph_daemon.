@@ -6,7 +6,9 @@ Digest256 action_key_for(const BuildNode& node, const std::vector<Digest256>& in
   Bytes material;
   auto append_string = [&](std::string_view value) {
     append_u32_le(material, static_cast<std::uint32_t>(value.size()));
-    material.insert(material.end(), value.begin(), value.end());
+    for (char ch : value) {
+      material.push_back(static_cast<Byte>(ch));
+    }
   };
   append_string("forge-action-key-v1");
   append_string(node.action.command);

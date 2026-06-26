@@ -9,7 +9,6 @@ std::optional<CycleWitness> BuildGraph::cycle_witness() const {
   enum class Color { white, gray, black };
   std::map<NodeId, Color> color;
   std::vector<NodeId> stack;
-  std::map<NodeId, EdgeId> parent_edge;
   for (const auto& [id, node] : nodes_) {
     (void)node;
     color[id] = Color::white;
@@ -18,11 +17,11 @@ std::optional<CycleWitness> BuildGraph::cycle_witness() const {
     color[node] = Color::gray;
     stack.push_back(node);
     for (const auto& [edge_id, edge] : edges_) {
+      (void)edge_id;
       if (edge.from != node) {
         continue;
       }
       if (color[edge.to] == Color::white) {
-        parent_edge[edge.to] = edge_id;
         if (auto found = visit(edge.to)) {
           return found;
         }

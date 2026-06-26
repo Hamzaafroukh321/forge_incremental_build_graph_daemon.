@@ -11,7 +11,9 @@ Result<WorkerResult> DeterministicMockExecutor::run(const WorkerLease& lease, co
   }
   Bytes payload;
   const auto hex = spec.action_key.hex();
-  payload.insert(payload.end(), hex.begin(), hex.end());
+  for (char ch : hex) {
+    payload.push_back(static_cast<Byte>(ch));
+  }
   payload.push_back(0);
   payload.insert(payload.end(), spec.declared_inputs.size(), static_cast<Byte>(0x42));
   return WorkerResult{lease.id, lease.attempt, true, {payload}, {}, {}};

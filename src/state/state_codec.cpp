@@ -32,7 +32,7 @@ Result<StateRecord> StateCodec::decode(const Bytes& bytes, std::size_t* consumed
     return Status::error(ErrorCode::format, "state-codec", "truncated state record");
   }
   const auto len = read_u32_le(bytes, 0).value();
-  if (len < kStateHeaderSize || len > bytes.size()) {
+  if (static_cast<std::size_t>(len) < kStateHeaderSize || static_cast<std::size_t>(len) > bytes.size()) {
     return Status::error(ErrorCode::format, "state-codec", "invalid state record length");
   }
   Bytes header(bytes.begin(), bytes.begin() + static_cast<std::ptrdiff_t>(kStateHeaderSize));
@@ -47,7 +47,7 @@ Result<StateRecord> StateCodec::decode(const Bytes& bytes, std::size_t* consumed
   record.base_sequence = read_u64_le(bytes, 16).value();
   record.new_sequence = read_u64_le(bytes, 24).value();
   const auto payload_crc = read_u32_le(bytes, 36).value();
-  record.payload.assign(bytes.begin() + static_cast<std::ptrdiff_t>(kStateHeaderSize), bytes.begin() + len);
+  record.payload.assign(bytes.begin() + static_cast<std::ptrdiff_t>(kStateHeaderSize), bytes.begin() + static_cast<std::ptrdiff_t>(len));
   if (crc32c(record.payload) != payload_crc) {
     return Status::error(ErrorCode::format, "state-codec", "state payload crc mismatch");
   }
